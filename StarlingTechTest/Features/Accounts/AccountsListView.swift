@@ -33,11 +33,11 @@ struct AccountsListContent: View {
             switch viewModel.state {
             case .idle:
                 ProgressView()
-                    .tint(.darkPurple)
+                    .foregroundColor(.darkPurple)
 
             case .loading:
                 ProgressView()
-                    .tint(.darkPurple)
+                    .foregroundColor(.darkPurple)
 
             case .loaded(let items):
                 List {
@@ -47,9 +47,11 @@ struct AccountsListContent: View {
                         } label: {
                             AccountsCell(account: account)
                         }
+                        .accessibilityIdentifier("accountRow_\(account.name)")
                         .listRowBackground(Color.darkPurple)
                     }
                 }
+                .accessibilityIdentifier("accountsList")
                 .navigationDestination(item: $selectedAccount) { account in
                     TransactionsFeedView(account: account)
                 }
@@ -58,11 +60,13 @@ struct AccountsListContent: View {
                 Text("No accounts found")
                     .font(AppTypography.heading)
                     .foregroundStyle(Color.darkPurple)
+                    .accessibilityIdentifier("accountsEmptyMessage")
 
             case .failed(let error):
                 Text("Error: \(error)")
                     .font(AppTypography.heading)
                     .foregroundStyle(Color.darkPurple)
+                    .accessibilityIdentifier("accountsErrorMessage")
             }
         }
         .task {

@@ -59,6 +59,7 @@ struct TransactionsFeedContent: View {
                     }
                     .foregroundStyle(.darkPurple)
                 }
+                .accessibilityIdentifier("transactionsList")
                 .refreshable {
                     await viewModel.refresh()
                 }
@@ -66,10 +67,12 @@ struct TransactionsFeedContent: View {
             case .empty:
                 Text("No transactions found")
                     .foregroundStyle(.darkPurple)
+                    .accessibilityIdentifier("transactionsEmptyMessage")
 
             case .failed(let error):
                 Text("Error: \(error)")
                     .foregroundStyle(.darkPurple)
+                    .accessibilityIdentifier("transactionsErrorMessage")
             }
         }
         .navigationTitle(viewModel.account.name)
@@ -84,6 +87,7 @@ struct TransactionsFeedContent: View {
                 NavigationLink("Savings") {
                     savingsGoalsDestination
                 }
+                .accessibilityIdentifier("savingsToolbarButton")
             }
         }
         .task {
@@ -100,6 +104,7 @@ struct TransactionsFeedContent: View {
             Text(viewModel.roundUp.displayString)
                 .font(AppTypography.title)
                 .foregroundStyle(.white)
+                .accessibilityIdentifier("roundUpAmount")
 
             Button {
                 isShowingSavingsGoals = true
@@ -115,6 +120,7 @@ struct TransactionsFeedContent: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("saveRoundUpButton")
             .disabled(viewModel.roundUp.amount == 0)
         }
     }
@@ -140,6 +146,7 @@ private struct TransactionRow: View {
             Text("\(item.direction == .outbound ? "-" : "+")\(item.amount.displayString)")
                 .font(AppTypography.body)
                 .foregroundStyle(.white)
+                .accessibilityIdentifier("transactionAmount")
         }
         .padding(.vertical, 4)
     }

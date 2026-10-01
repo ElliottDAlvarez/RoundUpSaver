@@ -10,7 +10,7 @@ import CoreData
 
 @main
 struct StarlingTechTestApp: App {
-    @State private var dependencies = AppDependencies()
+    @State private var dependencies = AppDependencies.makeForCurrentEnvironment()
     let persistenceController = PersistenceController.shared
 
     var body: some Scene {

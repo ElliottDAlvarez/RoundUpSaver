@@ -62,6 +62,7 @@ struct SavingsGoalsContent: View {
                             Text(viewModel.roundUp.displayString)
                                 .font(AppTypography.heading)
                                 .foregroundStyle(.white)
+                                .accessibilityIdentifier("savingsRoundUpAmount")
                         }
                         .padding(.vertical, 8)
                     } footer: {
@@ -82,6 +83,7 @@ struct SavingsGoalsContent: View {
                     }
                     .foregroundStyle(.darkPurple)
                 }
+                .accessibilityIdentifier("savingsGoalsList")
                 .refreshable {
                     await viewModel.refresh()
                 }
@@ -90,16 +92,19 @@ struct SavingsGoalsContent: View {
                 VStack(spacing: 16) {
                     Text("No savings goals yet")
                         .font(AppTypography.heading)
+                        .accessibilityIdentifier("savingsGoalsEmptyMessage")
 
                     Button("Create savings goal") {
                         isCreatingGoal = true
                     }
                     .buttonStyle(.primary)
+                    .accessibilityIdentifier("createFirstSavingsGoalButton")
                 }
                 .padding()
 
             case .failed(let error):
                 Text("Error: \(error)")
+                    .accessibilityIdentifier("savingsGoalsErrorMessage")
             }
         }
         .overlay {
@@ -117,6 +122,7 @@ struct SavingsGoalsContent: View {
                     Image(systemName: "plus")
                 }
                 .accessibilityLabel("Create savings goal")
+                .accessibilityIdentifier("addSavingsGoalToolbarButton")
                 .disabled(viewModel.isProcessing)
             }
         }
@@ -157,6 +163,7 @@ private struct SavingsGoalRow: View {
                 Text(progressText)
                     .font(AppTypography.caption)
                     .foregroundStyle(.white)
+                    .accessibilityIdentifier("savingsGoalProgress_\(goal.name)")
             }
 
             Spacer()
@@ -166,6 +173,7 @@ private struct SavingsGoalRow: View {
                 .foregroundStyle(.darkPurple)
                 .tint(.pastelPurple)
                 .disabled(!canTransfer)
+                .accessibilityIdentifier("addRoundUpButton_\(goal.name)")
         }
     }
 
@@ -190,15 +198,18 @@ private struct CreateSavingsGoalView: View {
         NavigationStack {
             Form {
                 TextField("Name", text: $name)
+                    .accessibilityIdentifier("savingsGoalNameField")
 
                 TextField("Target amount (optional)", text: $target)
                     .keyboardType(.decimalPad)
+                    .accessibilityIdentifier("savingsGoalTargetField")
             }
             .navigationTitle("New savings goal")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .accessibilityIdentifier("cancelCreateSavingsGoalButton")
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
@@ -213,6 +224,7 @@ private struct CreateSavingsGoalView: View {
                         }
                     }
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || isSaving)
+                    .accessibilityIdentifier("confirmCreateSavingsGoalButton")
                 }
             }
         }

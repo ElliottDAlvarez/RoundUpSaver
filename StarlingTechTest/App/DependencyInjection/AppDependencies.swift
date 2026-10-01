@@ -17,6 +17,26 @@ final class AppDependencies {
     let savingsRepository: SavingsRepositoryProtocol
     let roundUpSavingsUseCase: RoundUpSavingsUseCaseProtocol
 
+    init(transactionsRepository: TransactionsRepositoryProtocol,
+         accountsRepository: AccountsRepositoryProtocol,
+         savingsRepository: SavingsRepositoryProtocol,
+         roundUpSavingsUseCase: RoundUpSavingsUseCaseProtocol) {
+        self.transactionsRepository = transactionsRepository
+        self.accountsRepository = accountsRepository
+        self.savingsRepository = savingsRepository
+        self.roundUpSavingsUseCase = roundUpSavingsUseCase
+    }
+
+    /// Returns stubbed dependencies when launched by the UI test target, otherwise the live dependencies.
+    static func makeForCurrentEnvironment() -> AppDependencies {
+        #if DEBUG
+        if UITestConfiguration.isUITesting {
+            return .uiTesting(scenario: UITestConfiguration.scenario)
+        }
+        #endif
+        return AppDependencies()
+    }
+
     init() {
         let apiClient = APIClient()
 

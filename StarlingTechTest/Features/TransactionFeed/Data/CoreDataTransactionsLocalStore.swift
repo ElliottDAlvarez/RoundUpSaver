@@ -15,7 +15,9 @@ final class CoreDataTransactionsLocalStore: TransactionsLocalStoreProtocol {
         self.context = context
     }
 
-    func fetchTransactions(accountId: UUID, from: Date, to: Date) async throws -> [TransactionItem]? {
+    func fetchTransactions(accountId: UUID,
+                           from: Date,
+                           to: Date) async throws -> [TransactionItem]? {
         // Not worrying about CoreData for tests, just here as an example of how to fetch transactions from CoreData.
         return nil
 
@@ -27,8 +29,10 @@ final class CoreDataTransactionsLocalStore: TransactionsLocalStoreProtocol {
             return items.map { _ in TransactionItem(id: UUID(),
                                                     categoryId: UUID(),
                                                     amount: CurrencyAndAmount(currency: "GBP", amount: 100),
-                                                    direction: "IN",
+                                                    direction: .inbound,
                                                     transactionTime: Date().ISO8601Format(),
+                                                    source: nil,
+                                                    status: nil,
                                                     roundUp: nil) }
         } catch {
             throw CoreDataError.fetchError("Failed to fetch transactions: \(error.localizedDescription)")

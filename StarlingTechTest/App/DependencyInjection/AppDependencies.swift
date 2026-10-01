@@ -14,6 +14,8 @@ import CoreData
 final class AppDependencies {
     let transactionsRepository: TransactionsRepositoryProtocol
     let accountsRepository: AccountsRepositoryProtocol
+    let savingsRepository: SavingsRepositoryProtocol
+    let roundUpSavingsUseCase: RoundUpSavingsUseCaseProtocol
 
     init() {
         let apiClient = APIClient()
@@ -55,6 +57,25 @@ final class AppDependencies {
         accountsRepository = AccountsRepository(
             localStore: accountsLocalStore,
             accountsService: accountsService
+        )
+
+        // MARK: - Savings Goals
+
+        let savingsService = SavingsService(
+            apiClient: apiClient,
+            requestBuilder: requestBuilder
+        )
+
+        savingsRepository = SavingsRepository(
+            savingsService: savingsService
+        )
+
+        // MARK: - Use Cases
+
+        roundUpSavingsUseCase = RoundUpSavingsUseCase(
+            transactionsRepository: transactionsRepository,
+            savingsRepository: savingsRepository,
+            historyStore: UserDefaultsRoundUpHistoryStore()
         )
     }
 }

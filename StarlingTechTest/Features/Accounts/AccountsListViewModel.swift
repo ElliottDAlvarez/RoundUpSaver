@@ -1,5 +1,5 @@
 //
-//  LoginViewModel.swift
+//  AccountsListViewModel.swift
 //  StarlingTechTest
 //
 //  Created by Elliott D'Alvarez on 29/09/2026.
@@ -14,8 +14,6 @@ final class AccountsListViewModel {
     private(set) var state: ViewState<[Account]> = .idle
 
     private let accountsRepository: AccountsRepositoryProtocol
-
-    private var loadTask: Task<Void, Never>?
 
     init(accountsRepository: AccountsRepositoryProtocol) {
         self.accountsRepository = accountsRepository

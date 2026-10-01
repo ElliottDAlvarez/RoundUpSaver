@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct APIRequestBuilder {
+struct APIRequestBuilder: Sendable {
     let baseURL: URL
 
     func url(path: String, queryItems: [URLQueryItem] = []) throws -> URL {
@@ -18,7 +18,8 @@ struct APIRequestBuilder {
             throw APIError.invalidURL
         }
 
-        components.queryItems = queryItems
+        // Avoid a trailing ? when there are no query items
+        components.queryItems = queryItems.isEmpty ? nil : queryItems
 
         guard let url = components.url else {
             throw APIError.invalidURL

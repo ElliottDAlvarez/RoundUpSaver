@@ -7,62 +7,116 @@
 
 import Foundation
 
-/*protocol RoundUpSavingsUseCaseProtocol: Sendable {
-    func execute(
-        account: Account,
-        week: DateInterval,
-        savingsGoal: SavingsGoal
-    ) async throws
+protocol RoundUpSavingsUseCaseProtocol: Sendable {
+    func pendingRoundUp(account: Account,
+                        transactions: [TransactionItem]) async -> CurrencyAndAmount
+
+    func roundUpWeek(account: Account,
+                     week: DateInterval,
+                     savingsGoal: SavingsGoal) async throws -> CurrencyAndAmount
 }
 
-struct RoundUpSavingsUseCase: RoundUpSavingsUseCaseProtocol {
+enum RoundUpSavingsError: LocalizedError, Equatable {
+    case nothingToRoundUp
+    case transferInProgress
+
+    var errorDescription: String? {
+        switch self {
+        case .nothingToRoundUp:
+            return "There is nothing left to round up for this week."
+        case .transferInProgress:
+            return "A round-up transfer is already in progress."
+        }
+    }
+}
+
+// Actor to handle round-up savings operations, ensuring thread safety and preventing concurrent transfers.
+actor RoundUpSavingsUseCase: RoundUpSavingsUseCaseProtocol {
 
     private let transactionsRepository: TransactionsRepositoryProtocol
     private let savingsRepository: SavingsRepositoryProtocol
+    private let historyStore: RoundUpHistoryStoreProtocol
+    private let calculator: RoundUpCalculatorProtocol
 
-    init(
-        transactionsRepository: TransactionsRepositoryProtocol,
-        savingsRepository: SavingsRepositoryProtocol
-    ) {
+    private var isTransferring = false
+
+    init(transactionsRepository: TransactionsRepositoryProtocol,
+         savingsRepository: SavingsRepositoryProtocol,
+         historyStore: RoundUpHistoryStoreProtocol,
+         calculator: RoundUpCalculatorProtocol = RoundUpCalculator()) {
         self.transactionsRepository = transactionsRepository
         self.savingsRepository = savingsRepository
+        self.historyStore = historyStore
+        self.calculator = calculator
     }
 
-    func execute(
-        account: Account,
-        week: DateInterval,
-        savingsGoal: SavingsGoal
-    ) async throws {
+    func pendingRoundUp(account: Account,
+                        transactions: [TransactionItem]) async -> CurrencyAndAmount {
+        let pending = await pendingTransactions(account: account,
+                                                transactions: transactions)
 
-        let transactions = try await transactionsRepository.fetchTransactions(
-            account: account,
-            from: week.start,
-            to: week.end
+        return CurrencyAndAmount(currency: account.currency,
+                                 amount: calculator.calculate(transactions: pending)
         )
+    }
 
-        let roundUp = calculateRoundUp(transactions)
+    func roundUpWeek(account: Account,
+                     week: DateInterval,
+                     savingsGoal: SavingsGoal) async throws -> CurrencyAndAmount {
 
-        guard roundUp > 0 else {
-            return
+        guard !isTransferring else {
+            throw RoundUpSavingsError.transferInProgress
         }
 
-        try await savingsRepository.transfer(
-            amount: roundUp,
-            to: savingsGoal
-        )
+        isTransferring = true
+
+        let transactions = try await latestTransactions(account: account,
+                                                        week: week)
+
+        let pending = await pendingTransactions(account: account,
+                                                transactions: transactions)
+
+        let roundUp = calculator.calculate(transactions: pending)
+
+        guard roundUp > 0 else {
+            throw RoundUpSavingsError.nothingToRoundUp
+        }
+
+        let amount = CurrencyAndAmount(currency: account.currency,
+                                       amount: roundUp)
+
+        try await savingsRepository.transfer(amount: amount,
+                                             to: savingsGoal,
+                                             account: account)
+
+        // Only recorded once the transfer has succeeded, so a failed transfer can be retried
+        await historyStore.markAsRoundedUp(pending.map(\.id),
+                                           accountId: account.id)
+
+        return amount
     }
 
-    private func calculateRoundUp(
-        _ transactions: [TransactionItem]
-    ) -> Int {
-        transactions
-            .filter { $0.direction == "OUT" }
-            .reduce(0) { total, transaction in
-                let amount = transaction.amount.amount
-                let remainder = amount % 100
+    private func pendingTransactions(account: Account,
+                                     transactions: [TransactionItem]) async -> [TransactionItem] {
+        let roundedUpIds = await historyStore.roundedUpTransactionIds(accountId: account.id)
 
-                return total + (remainder == 0 ? 0 : 100 - remainder)
+        return transactions.filter { !roundedUpIds.contains($0.id) }
+    }
+
+    private func latestTransactions(account: Account,
+                                    week: DateInterval) async throws -> [TransactionItem] {
+        var latest: [TransactionItem] = []
+
+        let stream = transactionsRepository.fetchTransactions(account: account,
+                                                              from: week.start,
+                                                              to: week.end)
+
+        for try await transactions in stream {
+            if let transactions {
+                latest = transactions
             }
+        }
+
+        return latest
     }
 }
-*/

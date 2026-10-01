@@ -8,27 +8,24 @@
 import Foundation
 
 protocol TransactionsRepositoryProtocol: Sendable {
-    func fetchTransactions(
-        account: Account,
-        from: Date,
-        to: Date
-    ) -> AsyncThrowingStream<[TransactionItem]?, Error>
+    func fetchTransactions(account: Account,
+                           from: Date,
+                           to: Date) -> AsyncThrowingStream<[TransactionItem]?, Error>
 }
 
 struct TransactionsRepository: TransactionsRepositoryProtocol {
     private let localStore: TransactionsLocalStoreProtocol
     private let transactionsService: TransactionsServiceProtocol
 
-    init(localStore: TransactionsLocalStoreProtocol, transactionsService: TransactionsServiceProtocol) {
+    init(localStore: TransactionsLocalStoreProtocol,
+         transactionsService: TransactionsServiceProtocol) {
         self.localStore = localStore
         self.transactionsService = transactionsService
     }
 
-    func fetchTransactions(
-        account: Account,
-        from: Date,
-        to: Date
-    ) -> AsyncThrowingStream<[TransactionItem]?, Error> {
+    func fetchTransactions(account: Account,
+                           from: Date,
+                           to: Date) -> AsyncThrowingStream<[TransactionItem]?, Error> {
 
         AsyncThrowingStream { continuation in
             let task = Task {

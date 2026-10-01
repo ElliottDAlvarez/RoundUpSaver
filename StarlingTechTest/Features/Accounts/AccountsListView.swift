@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  AccountsListView.swift
 //  StarlingTechTest
 //
 //  Created by Elliott D'Alvarez on 29/09/2026.
@@ -18,7 +18,7 @@ struct AccountsListView: View {
 }
 
 struct AccountsListContent: View {
-    @State var viewModel: AccountsListViewModel
+    @State private var viewModel: AccountsListViewModel
 
     init(accountsRepository: AccountsRepositoryProtocol) {
         _viewModel = State(initialValue: AccountsListViewModel(accountsRepository: accountsRepository)
@@ -41,10 +41,7 @@ struct AccountsListContent: View {
                             NavigationLink {
                                 TransactionsFeedView(account: account)
                             } label: {
-                                Text(
-                                    account.createdAt,
-                                    formatter: itemFormatter
-                                )
+                                AccountsCell(account: account)
                             }
                         }
                     }
@@ -59,6 +56,22 @@ struct AccountsListContent: View {
         }
         .task {
             await viewModel.load()
+        }
+    }
+}
+
+private struct AccountsCell: View {
+    let account: Account
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(account.name)
+                .font(AppTypography.body)
+
+            Text(
+                account.createdAt,
+                formatter: itemFormatter
+            )
+            .font(AppTypography.caption)
         }
     }
 }

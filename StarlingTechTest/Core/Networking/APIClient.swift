@@ -85,6 +85,11 @@ private extension APIClient {
 
         } catch let error as APIError {
             throw error
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as URLError where error.code == .cancelled {
+            // Surface cancellation as-is so callers can ignore it rather than show an error
+            throw CancellationError()
         } catch {
             throw APIError.networkError(error.localizedDescription)
         }

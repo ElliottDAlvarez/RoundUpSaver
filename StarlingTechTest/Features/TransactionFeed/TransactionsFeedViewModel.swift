@@ -46,14 +46,25 @@ final class TransactionsFeedViewModel {
     }
 
     func refresh() async {
-        // Only want to refresh if we are not already loading
+        // Only want to refresh if we are not already loading / refreshing
         if case .loading = state { return }
+        guard !isRefreshing else { return }
 
-        await fetchTransactions()
+        isRefreshing = true
+        defer { isRefreshing = false }
+
+        // Keep the current content on screen while refreshing. Swapping the List out for a
+        // loading view removes the `.refreshable` container, which cancels this task mid-flight.
+        await fetchTransactions(showLoading: false)
     }
 
-    private func fetchTransactions() async {
-        state = .loading
+    @ObservationIgnored private var isRefreshing = false
+
+    private func fetchTransactions(showLoading: Bool = true) async {
+        let previousState = state
+        if showLoading {
+            state = .loading
+        }
         week = Self.week(endingAt: now())
 
         do {
@@ -72,9 +83,26 @@ final class TransactionsFeedViewModel {
                 }
             }
 
+        } catch where Self.isCancellation(error) {
+            // Cancelled (e.g. refresh gesture interrupted) - don't surface as an error.
         } catch {
             state = .failed(error.localizedDescription)
         }
+
+        // If the fetch ended without producing anything (e.g. cancelled), don't leave the UI stuck loading.
+        if case .loading = state {
+            if case .loading = previousState {
+                state = .idle
+            } else {
+                state = previousState
+            }
+        }
+    }
+
+    private static func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError { return true }
+        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
+        return false
     }
 
     private func updateRoundUp() async {

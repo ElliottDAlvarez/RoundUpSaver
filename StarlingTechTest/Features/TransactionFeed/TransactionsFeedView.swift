@@ -21,14 +21,14 @@ struct TransactionsFeedView: View {
 
 struct TransactionsFeedContent: View {
     @State private var viewModel: TransactionsFeedViewModel
+    @State private var isShowingSavingsGoals = false
 
     init(transactionsRepository: TransactionsRepositoryProtocol,
          roundUpSavingsUseCase: RoundUpSavingsUseCaseProtocol,
          account: Account) {
         _viewModel = State(initialValue: TransactionsFeedViewModel(transactionsRepository: transactionsRepository,
                                                                    roundUpSavingsUseCase: roundUpSavingsUseCase,
-                                                                   account: account)
-        )
+                                                                   account: account))
     }
 
     var body: some View {
@@ -36,21 +36,28 @@ struct TransactionsFeedContent: View {
             switch viewModel.state {
             case .idle:
                 ProgressView()
+                    .tint(.darkPurple)
 
             case .loading:
                 ProgressView()
+                    .tint(.darkPurple)
 
             case .loaded(let items):
                 List {
-                    Section {
-                        roundUpSummary
+                    if viewModel.roundUp.amount > 0 {
+                        Section {
+                            roundUpSummary
+                                .listRowBackground(Color.darkPurple)
+                        }
                     }
 
                     Section("Transactions") {
                         ForEach(items) { item in
                             TransactionRow(item: item)
+                                .listRowBackground(Color.darkPurple)
                         }
                     }
+                    .foregroundStyle(.darkPurple)
                 }
                 .refreshable {
                     await viewModel.refresh()
@@ -58,12 +65,20 @@ struct TransactionsFeedContent: View {
 
             case .empty:
                 Text("No transactions found")
+                    .foregroundStyle(.darkPurple)
 
             case .failed(let error):
                 Text("Error: \(error)")
+                    .foregroundStyle(.darkPurple)
             }
         }
         .navigationTitle(viewModel.account.name)
+        .navigationDestination(isPresented: $isShowingSavingsGoals) {
+            savingsGoalsDestination
+        }
+        .sensoryFeedback(.selection, trigger: isShowingSavingsGoals) { _, newValue in
+            newValue
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink("Savings") {
@@ -77,22 +92,31 @@ struct TransactionsFeedContent: View {
     }
 
     private var roundUpSummary: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("This week's round-up")
                 .font(AppTypography.caption)
+                .foregroundStyle(.pastelPurple)
 
             Text(viewModel.roundUp.displayString)
                 .font(AppTypography.title)
+                .foregroundStyle(.white)
 
-            NavigationLink {
-                savingsGoalsDestination
+            Button {
+                isShowingSavingsGoals = true
             } label: {
-                Text("Save round-up")
+                HStack(spacing: 8) {
+                    Text("Save round-up?")
+                    Image(systemName: "chevron.right")
+                        .font(AppTypography.caption)
+                }
+                .font(AppTypography.button)
+                .foregroundStyle(.pastelPurple)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .contentShape(Rectangle())
             }
-            .buttonStyle(.primary)
+            .buttonStyle(.plain)
             .disabled(viewModel.roundUp.amount == 0)
         }
-        .padding(.vertical, 8)
     }
 
     private var savingsGoalsDestination: some View {
@@ -109,12 +133,15 @@ private struct TransactionRow: View {
         HStack {
             Text(item.transactionTime)
                 .font(AppTypography.caption)
+                .foregroundStyle(.pastelPurple)
 
             Spacer()
 
             Text("\(item.direction == .outbound ? "-" : "+")\(item.amount.displayString)")
                 .font(AppTypography.body)
+                .foregroundStyle(.white)
         }
+        .padding(.vertical, 4)
     }
 }
 
@@ -125,7 +152,7 @@ private struct TransactionRow: View {
                                               defaultCategory: UUID(),
                                               currency: "GBP",
                                               createdAt: Date(),
-                                              name: "DEBUG ACCOUNT"))
+                                              name: "Test Account"))
     }
     .environment(AppDependencies())
 }

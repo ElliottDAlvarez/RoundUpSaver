@@ -42,7 +42,7 @@ actor RoundUpSavingsUseCase: RoundUpSavingsUseCaseProtocol {
 
     init(transactionsRepository: TransactionsRepositoryProtocol,
          savingsRepository: SavingsRepositoryProtocol,
-         historyStore: RoundUpHistoryStoreProtocol,
+         historyStore: RoundUpHistoryStoreProtocol = UserDefaultsRoundUpHistoryStore(),
          calculator: RoundUpCalculatorProtocol = RoundUpCalculator()) {
         self.transactionsRepository = transactionsRepository
         self.savingsRepository = savingsRepository
@@ -69,6 +69,9 @@ actor RoundUpSavingsUseCase: RoundUpSavingsUseCaseProtocol {
         }
 
         isTransferring = true
+
+        // set when function exits to allow future transfers
+        defer { isTransferring = false }
 
         let transactions = try await latestTransactions(account: account,
                                                         week: week)

@@ -12,13 +12,16 @@ struct AccountsListView: View {
     @Environment(AppDependencies.self) private var dependencies
 
     var body: some View {
-        AccountsListContent(accountsRepository: dependencies.accountsRepository)
-            .appBackground()
+        NavigationStack {
+            AccountsListContent(accountsRepository: dependencies.accountsRepository)
+                .appBackground()
+        }
     }
 }
 
 struct AccountsListContent: View {
     @State private var viewModel: AccountsListViewModel
+    @State private var selectedAccount: Account?
 
     init(accountsRepository: AccountsRepositoryProtocol) {
         _viewModel = State(initialValue: AccountsListViewModel(accountsRepository: accountsRepository)
@@ -30,28 +33,36 @@ struct AccountsListContent: View {
             switch viewModel.state {
             case .idle:
                 ProgressView()
+                    .tint(.darkPurple)
 
             case .loading:
                 ProgressView()
+                    .tint(.darkPurple)
 
             case .loaded(let items):
-                NavigationStack {
-                    List {
-                        ForEach(items) { account in
-                            NavigationLink {
-                                TransactionsFeedView(account: account)
-                            } label: {
-                                AccountsCell(account: account)
-                            }
+                List {
+                    ForEach(items) { account in
+                        Button {
+                            selectedAccount = account
+                        } label: {
+                            AccountsCell(account: account)
                         }
+                        .listRowBackground(Color.darkPurple)
                     }
+                }
+                .navigationDestination(item: $selectedAccount) { account in
+                    TransactionsFeedView(account: account)
                 }
 
             case .empty:
                 Text("No accounts found")
+                    .font(AppTypography.heading)
+                    .foregroundStyle(Color.darkPurple)
 
             case .failed(let error):
                 Text("Error: \(error)")
+                    .font(AppTypography.heading)
+                    .foregroundStyle(Color.darkPurple)
             }
         }
         .task {
@@ -63,25 +74,29 @@ struct AccountsListContent: View {
 private struct AccountsCell: View {
     let account: Account
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(account.name)
-                .font(AppTypography.body)
+        VStack(alignment: .trailing, spacing: 12) {
+            HStack(spacing: 12) {
+                Text(account.name.uppercased())
+                    .font(AppTypography.heading)
+                    .foregroundStyle(Color.pastelPurple)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text(
-                account.createdAt,
-                formatter: itemFormatter
-            )
-            .font(AppTypography.caption)
+                Text(account.accountType)
+                    .font(AppTypography.body)
+                    .foregroundStyle(Color.pastelPurple)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+
+            Text(account.currency)
+                .font(AppTypography.caption)
+                .foregroundStyle(.white)
         }
+        .padding(.vertical, 8)
     }
 }
-
-private let itemFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .short
-    formatter.timeStyle = .medium
-    return formatter
-}()
 
 #Preview {
     AccountsListView()

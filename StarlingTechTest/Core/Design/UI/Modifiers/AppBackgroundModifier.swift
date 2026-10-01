@@ -10,6 +10,8 @@ import SwiftUI
 fileprivate struct AppBackgroundModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
+            // Hide the default List/Form/ScrollView background so ours shows through
+            .scrollContentBackground(.hidden)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.pastelPurple)
     }

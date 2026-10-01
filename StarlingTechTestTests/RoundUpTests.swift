@@ -339,3 +339,25 @@ struct TransactionsFeedViewModelTests {
         #expect(viewModel.roundUp.amount == 0)
     }
 }
+
+// MARK: - Regression
+
+struct RoundUpSavingsUseCaseLockTests {
+    @Test func lockIsReleasedAfterAFailedRoundUp() async throws {
+        let savingsRepository = MockSavingsRepository()
+
+        let useCase = RoundUpSavingsUseCase(
+            transactionsRepository: MockTransactionsRepository(batches: [[makeTransaction(500)]]),
+            savingsRepository: savingsRepository,
+            historyStore: InMemoryRoundUpHistoryStore()
+        )
+
+        await #expect(throws: RoundUpSavingsError.nothingToRoundUp) {
+            try await useCase.roundUpWeek(account: testAccount, week: testWeek, savingsGoal: testGoal)
+        }
+
+        await #expect(throws: RoundUpSavingsError.nothingToRoundUp) {
+            try await useCase.roundUpWeek(account: testAccount, week: testWeek, savingsGoal: testGoal)
+        }
+    }
+}

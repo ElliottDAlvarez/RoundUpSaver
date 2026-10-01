@@ -45,19 +45,31 @@ struct SavingsGoalsContent: View {
             switch viewModel.state {
             case .idle:
                 ProgressView()
+                    .tint(.darkPurple)
 
             case .loading:
                 ProgressView()
+                    .tint(.darkPurple)
 
             case .loaded(let goals):
                 List {
                     Section {
-                        Text("Round-up to save: \(viewModel.roundUp.displayString)")
-                            .font(AppTypography.heading)
+                        HStack(spacing: 8) {
+                            Text("Round-up to save:")
+                                .font(AppTypography.heading)
+                                .foregroundStyle(.pastelPurple)
+
+                            Text(viewModel.roundUp.displayString)
+                                .font(AppTypography.heading)
+                                .foregroundStyle(.white)
+                        }
+                        .padding(.vertical, 8)
                     } footer: {
                         Text("Choose a savings goal to transfer this week's round-up into.")
                             .font(AppTypography.caption)
+                            .foregroundStyle(.darkPurple)
                     }
+                    .listRowBackground(Color.darkPurple)
 
                     Section("Savings goals") {
                         ForEach(goals) { goal in
@@ -65,8 +77,10 @@ struct SavingsGoalsContent: View {
                                            canTransfer: viewModel.canTransferRoundUp) {
                                 Task { await viewModel.transferRoundUp(to: goal) }
                             }
+                                           .listRowBackground(Color.darkPurple)
                         }
                     }
+                    .foregroundStyle(.darkPurple)
                 }
                 .refreshable {
                     await viewModel.refresh()
@@ -91,6 +105,7 @@ struct SavingsGoalsContent: View {
         .overlay {
             if viewModel.isProcessing {
                 ProgressView()
+                    .tint(.darkPurple)
             }
         }
         .navigationTitle("Savings goals")
@@ -136,17 +151,20 @@ private struct SavingsGoalRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(goal.name)
-                    .font(AppTypography.body)
+                    .font(AppTypography.title)
+                    .foregroundStyle(.pastelPurple)
 
                 Text(progressText)
                     .font(AppTypography.caption)
+                    .foregroundStyle(.white)
             }
 
             Spacer()
 
             Button("Add", action: onTransfer)
                 .buttonStyle(.borderedProminent)
-                .tint(.darkPurple)
+                .foregroundStyle(.darkPurple)
+                .tint(.pastelPurple)
                 .disabled(!canTransfer)
         }
     }

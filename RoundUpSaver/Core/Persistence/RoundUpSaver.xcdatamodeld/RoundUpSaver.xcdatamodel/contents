@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
+    <entity name="CachedAccount" representedClassName="CachedAccount" syncable="YES" codeGenerationType="class">
+        <attribute name="accountType" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="currency" optional="YES" attributeType="String"/>
+        <attribute name="defaultCategory" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" optional="YES" attributeType="String"/>
+        <attribute name="sortIndex" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+    </entity>
+    <entity name="CachedTransaction" representedClassName="CachedTransaction" syncable="YES" codeGenerationType="class">
+        <attribute name="accountId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="categoryId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="currency" optional="YES" attributeType="String"/>
+        <attribute name="direction" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="minorUnits" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="roundUpCurrency" optional="YES" attributeType="String"/>
+        <attribute name="roundUpGoalCategoryId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="roundUpMinorUnits" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="source" optional="YES" attributeType="String"/>
+        <attribute name="status" optional="YES" attributeType="String"/>
+        <attribute name="transactionDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="transactionTime" optional="YES" attributeType="String"/>
+    </entity>
+</model>

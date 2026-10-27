@@ -331,7 +331,7 @@ struct APIRequestBuilderTests {
         _ = try await service.getTransactions(account: Fixture.account, from: Fixture.week.start, to: Fixture.week.end)
 
         let url = try #require(StubURLProtocol.recordedRequests(id: id).first?.url)
-        #expect(url.path == "/api/v2/feed/account/00000000-0000-0000-0000-000000000001/category/00000000-0000-0000-0000-000000000002/paginated-transactions")
+        #expect(url.path == "/api/v2/feed/account/00000000-0000-0000-0000-000000000001/category/00000000-0000-0000-0000-000000000002/transactions-between")
         #expect(url.query?.contains("minTransactionTimestamp=2026-09-30T12:00:00.000Z") == true)
         #expect(url.query?.contains("maxTransactionTimestamp=2026-10-07T12:00:00.000Z") == true)
     }

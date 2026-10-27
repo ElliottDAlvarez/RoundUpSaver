@@ -54,9 +54,9 @@ struct CurrencyPrecisionTests {
     }
 }
 
-// MARK: - Pagination
+// MARK: - Transactions service
 
-struct TransactionsPaginationTests {
+struct TransactionsServiceTests {
     private let baseURL = URL(string: "https://api.test.local")!
 
     private func feedItem(_ id: Int, amount: Int) -> String {
@@ -67,28 +67,15 @@ struct TransactionsPaginationTests {
         """
     }
 
-    private func page(_ items: [String], next: String?) -> Data {
-        let links = next.map { #""links":{"self":"x","first":"x","next":"\#($0)"}"# } ?? #""links":{"self":"x","first":"x"}"#
-        return Data(#"{"feedItems":[\#(items.joined(separator: ","))],\#(links)}"#.utf8)
-    }
-
-    private func makeService(id: String, pages: [String: Data]) -> TransactionsService {
-        let session = StubURLProtocol.makeSession(id: id) { request in
-            let cursor = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?
-                .queryItems?.first { $0.name == "cursor" }?.value ?? "first"
-            guard let body = pages[cursor] else { return (404, Data()) }
-            return (200, body)
-        }
+    private func makeService(id: String, status: Int = 200, body: String) -> TransactionsService {
+        let session = StubURLProtocol.makeSession(id: id) { _ in (status, Data(body.utf8)) }
         return TransactionsService(apiClient: APIClient(session: session),
                                    requestBuilder: APIRequestBuilder(baseURL: baseURL))
     }
 
-    @Test func followsNextLinksUntilTheLastPage() async throws {
-        let service = makeService(id: "pages", pages: [
-            "first": page([feedItem(1, amount: 435)], next: "/api/v2/feed/next?cursor=two"),
-            "two": page([feedItem(2, amount: 520)], next: "https://api.test.local/api/v2/feed/next?cursor=three"),
-            "three": page([feedItem(3, amount: 87)], next: nil)
-        ])
+    @Test func returnsTheWholeRangeInOneRequest() async throws {
+        let body = #"{"feedItems":[\#([feedItem(1, amount: 435), feedItem(2, amount: 520), feedItem(3, amount: 87)].joined(separator: ","))]}"#
+        let service = makeService(id: "between", body: body)
 
         let transactions = try await service.getTransactions(account: Fixture.account,
                                                              from: Fixture.week.start,
@@ -96,61 +83,45 @@ struct TransactionsPaginationTests {
 
         #expect(transactions.map(\.id) == [Fixture.uuid(1), Fixture.uuid(2), Fixture.uuid(3)])
         #expect(RoundUpCalculator().calculate(transactions: transactions) == 158)
-        #expect(StubURLProtocol.recordedRequests(id: "pages").count == 3)
+        #expect(StubURLProtocol.recordedRequests(id: "between").count == 1)
     }
 
-    @Test func overlappingPagesDoNotDoubleCount() async throws {
-        let service = makeService(id: "overlap", pages: [
-            "first": page([feedItem(1, amount: 435)], next: "/next?cursor=two"),
-            "two": page([feedItem(1, amount: 435), feedItem(2, amount: 520)], next: nil)
-        ])
-
-        let transactions = try await service.getTransactions(account: Fixture.account,
-                                                             from: Fixture.week.start,
-                                                             to: Fixture.week.end)
-
-        #expect(transactions.map(\.id) == [Fixture.uuid(1), Fixture.uuid(2)])
-    }
-
-    @Test func detectsPaginationLoops() async {
-        let service = makeService(id: "loop", pages: [
-            "first": page([], next: "/next?cursor=two"),
-            "two": page([], next: "/next?cursor=two")
-        ])
+    @Test func rejectsRangesLongerThanTheAPIAllowsWithoutCallingIt() async {
+        let service = makeService(id: "tooLong", body: #"{"feedItems":[]}"#)
+        let start = Fixture.now.addingTimeInterval(-TransactionsService.maximumRange - 1)
 
         await #expect(throws: APIError.self) {
-            try await service.getTransactions(account: Fixture.account, from: Fixture.week.start, to: Fixture.week.end)
+            try await service.getTransactions(account: Fixture.account, from: start, to: Fixture.now)
+        }
+        #expect(StubURLProtocol.recordedRequests(id: "tooLong").isEmpty)
+    }
+
+    @Test func rejectsReversedRanges() async {
+        let service = makeService(id: "reversed", body: #"{"feedItems":[]}"#)
+
+        await #expect(throws: APIError.self) {
+            try await service.getTransactions(account: Fixture.account, from: Fixture.week.end, to: Fixture.week.start)
         }
     }
 
-    @Test func neverFollowsLinksToAnotherHost() async {
-        let service = makeService(id: "foreign", pages: [
-            "first": page([feedItem(1, amount: 435)], next: "https://evil.example.com/steal?cursor=two")
-        ])
+    @Test func surfacesServerErrors() async {
+        let service = makeService(id: "serverError", status: 400, body: "")
 
-        await #expect(throws: APIError.invalidURL) {
+        await #expect(throws: APIError.statusCode(400)) {
             try await service.getTransactions(account: Fixture.account, from: Fixture.week.start, to: Fixture.week.end)
-        }
-        // The token-bearing request never left the API host
-        #expect(StubURLProtocol.recordedRequests(id: "foreign").allSatisfy { $0.url?.host == "api.test.local" })
-    }
-
-    @Test(arguments: ["http://api.test.local/x", "https://api.test.local:8443/x", "ftp://api.test.local/x"])
-    func linkResolutionRejectsOtherOrigins(_ link: String) {
-        #expect(throws: APIError.invalidURL) {
-            try APIRequestBuilder(baseURL: baseURL).url(resolvingLink: link)
         }
     }
 
     @Test func toleratesFeedItemsWithoutUnusedFields() throws {
         // No sourceAmount, updatedAt, source, roundUp etc. The spec marks no FeedItem field as required.
-        let json = Data(#"{"feedItems":[\#(feedItem(1, amount: 435))],"links":{"self":"x","first":"x"}}"#.utf8)
+        let json = Data(#"{"feedItems":[\#(feedItem(1, amount: 435))]}"#.utf8)
 
-        let decoded = try APIClient.makeDefaultDecoder().decode(PaginatedFeedItemsDTO.self, from: json)
+        let decoded = try APIClient.makeDefaultDecoder().decode(FeedItemsDTO.self, from: json)
 
         #expect(decoded.feedItems.map(\.feedItemUid) == [Fixture.uuid(1)])
     }
 }
+
 
 // MARK: - Keychain
 

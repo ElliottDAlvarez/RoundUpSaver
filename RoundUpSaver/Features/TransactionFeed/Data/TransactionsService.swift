@@ -8,15 +8,19 @@
 import Foundation
 
 protocol TransactionsServiceProtocol: Sendable {
-    /// Every transaction in the window, across all pages.
+    /// Every transaction in the range.
     func getTransactions(account: Account,
                          from: Date,
                          to: Date) async throws -> [TransactionItem]
 }
 
+/// Uses `transactions-between`, which returns the whole range in one response with no pagination.
+///
+/// The API limits this endpoint to ranges of up to 1 year (longer ranges get HTTP 400). Round-ups only
+/// ever ask for 7 days. If a feature ever needs more than a year, it should use `paginated-transactions`.
 struct TransactionsService: TransactionsServiceProtocol {
-    /// Safety net against a misbehaving server. A week of card spending is nowhere near this.
-    static let maximumPages = 50
+    /// The API's limit for `transactions-between`. Checked here so a too-long range fails clearly before any request.
+    static let maximumRange: TimeInterval = 60 * 60 * 24 * 365
 
     private let apiClient: APIClientProtocol
     private let requestBuilder: APIRequestBuilder
@@ -32,39 +36,21 @@ struct TransactionsService: TransactionsServiceProtocol {
     func getTransactions(account: Account,
                          from: Date,
                          to: Date) async throws -> [TransactionItem] {
-        let path = "api/v2/feed/account/\(account.id.uuidString.lowercased())"
-            + "/category/\(account.defaultCategory.uuidString.lowercased())/paginated-transactions"
+        guard from <= to, to.timeIntervalSince(from) <= Self.maximumRange else {
+            throw APIError.unsuccessful(String(localized: "Transactions can only be fetched for up to one year at a time."))
+        }
 
-        var nextURL: URL? = try requestBuilder.url(
+        let path = "api/v2/feed/account/\(account.id.uuidString.lowercased())"
+            + "/category/\(account.defaultCategory.uuidString.lowercased())/transactions-between"
+
+        let url = try requestBuilder.url(
             path: path,
             queryItems: [URLQueryItem(name: "minTransactionTimestamp", value: dateFormatStyle.format(from)),
                          URLQueryItem(name: "maxTransactionTimestamp", value: dateFormatStyle.format(to))]
         )
 
-        var items: [TransactionItem] = []
-        var seenIds = Set<UUID>()
-        var visitedURLs = Set<URL>()
+        let response = try await apiClient.get(FeedItemsDTO.self, url: url)
 
-        // A round-up must see every transaction in the window, so follow `links.next` to the end
-        while let url = nextURL {
-            guard visitedURLs.insert(url).inserted else {
-                throw APIError.unsuccessful(String(localized: "The transaction feed returned a pagination loop."))
-            }
-            guard visitedURLs.count <= Self.maximumPages else {
-                throw APIError.unsuccessful(String(localized: "The transaction feed has too many pages."))
-            }
-
-            try Task.checkCancellation()
-            let page = try await apiClient.get(PaginatedFeedItemsDTO.self, url: url)
-
-            // Pages can overlap if new transactions arrive while paging; keep the first copy of each
-            for dto in page.feedItems where seenIds.insert(dto.feedItemUid).inserted {
-                items.append(dto.toDomain())
-            }
-
-            nextURL = try page.links?.next.map(requestBuilder.url(resolvingLink:))
-        }
-
-        return items
+        return response.feedItems.map { $0.toDomain() }
     }
 }

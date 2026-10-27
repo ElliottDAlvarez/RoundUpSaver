@@ -27,19 +27,4 @@ struct APIRequestBuilder: Sendable {
 
         return url
     }
-
-    /// Resolves a HATEOAS link from a response (absolute, or relative to the API host).
-    ///
-    /// Requests carry the bearer token, so a link pointing at any other scheme, host or port
-    /// is rejected rather than followed.
-    func url(resolvingLink link: String) throws -> URL {
-        guard let resolved = URL(string: link, relativeTo: baseURL)?.absoluteURL,
-              resolved.scheme?.lowercased() == baseURL.scheme?.lowercased(),
-              resolved.host?.lowercased() == baseURL.host?.lowercased(),
-              resolved.port == baseURL.port else {
-            throw APIError.invalidURL
-        }
-
-        return resolved
-    }
 }

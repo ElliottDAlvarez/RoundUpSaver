@@ -36,7 +36,7 @@ RoundUpSaver/
 
 ### Data and offline behaviour
 
-- The transaction feed follows the API's HATEOAS `links.next` until the last page, so a round-up always covers every transaction in the window. Pages are de-duplicated, loops and runaway paging are stopped, and links are only followed on the API's own scheme, host and port so the bearer token can't be sent anywhere else.
+- Transactions come from `transactions-between`, which returns the whole date range in a single response with no pagination to follow. The API limits it to 1 year per request (the round-up only needs 7 days); `TransactionsService` rejects longer ranges before making a request. `paginated-transactions` is only needed for history longer than a year.
 - Repositories return an `AsyncThrowingStream` that yields the Core Data cache first (if there is one) and then the API response, which replaces the cache for that account and date window. A failed cache write never hides fresh data.
 - If a refresh fails while content is already on screen, the content stays and an alert explains the problem. If there is nothing to show, an error state with **Try again** is shown instead.
 - Round-up transfers use an idempotency key derived from the transactions being rounded up (`RoundUpTransferID`), so retrying after a timeout can't move the money twice. Rounded-up transactions are recorded only after the transfer succeeds. That history is pruned after 30 days (well beyond the 7 day window), so it never grows without limit.

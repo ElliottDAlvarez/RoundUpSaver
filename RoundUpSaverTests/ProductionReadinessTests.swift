@@ -193,13 +193,13 @@ struct CoordinatorViewModelLifetimeTests {
     @Test func eachSheetPresentationStartsWithAFreshForm() {
         let coordinator = AppCoordinator(dependencies: makeDependencies())
 
-        coordinator.showCreateSavingsGoal(account: Fixture.account) {}
+        coordinator.showCreateSavingsGoal(for: Fixture.account) {}
         let first = coordinator.createSavingsGoalViewModel(account: Fixture.account)
         first.name = "Draft"
         #expect(coordinator.createSavingsGoalViewModel(account: Fixture.account) === first)
 
         coordinator.didCancelCreateSavingsGoal()
-        coordinator.showCreateSavingsGoal(account: Fixture.account) {}
+        coordinator.showCreateSavingsGoal(for: Fixture.account) {}
 
         #expect(coordinator.createSavingsGoalViewModel(account: Fixture.account).name == "")
     }

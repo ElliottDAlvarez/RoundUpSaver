@@ -43,7 +43,7 @@ final class TransactionsFeedViewModel {
     }
 
     func showSavingsGoals() {
-        coordinator?.showSavingsGoals(account: account, week: week, roundUp: roundUp)
+        coordinator?.showSavingsGoals(for: account, week: week, roundUp: roundUp)
     }
 
     /// Called every time the screen appears. Loads on first appearance; afterwards only recalculates

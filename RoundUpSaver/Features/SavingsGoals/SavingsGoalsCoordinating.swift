@@ -11,7 +11,7 @@ import Foundation
 @MainActor
 protocol SavingsGoalsCoordinating: AnyObject {
     /// Presents the create-goal form. `onCreated` runs after a goal is created and the form is dismissed.
-    func showCreateSavingsGoal(account: Account, onCreated: @escaping @MainActor () async -> Void)
+    func showCreateSavingsGoal(for account: Account, onCreated: @escaping @MainActor () async -> Void)
 }
 
 /// Navigation that the create savings goal form can request. A coordinator implements it.

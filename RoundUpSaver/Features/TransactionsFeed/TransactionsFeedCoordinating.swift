@@ -10,5 +10,5 @@ import Foundation
 /// Navigation that the transactions feed can request. A coordinator implements it.
 @MainActor
 protocol TransactionsFeedCoordinating: AnyObject {
-    func showSavingsGoals(account: Account, week: DateInterval, roundUp: CurrencyAndAmount)
+    func showSavingsGoals(for account: Account, week: DateInterval, roundUp: CurrencyAndAmount)
 }

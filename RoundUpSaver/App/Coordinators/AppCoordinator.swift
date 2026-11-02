@@ -144,13 +144,13 @@ extension AppCoordinator: AccountsListCoordinating {
 }
 
 extension AppCoordinator: TransactionsFeedCoordinating {
-    func showSavingsGoals(account: Account, week: DateInterval, roundUp: CurrencyAndAmount) {
+    func showSavingsGoals(for account: Account, week: DateInterval, roundUp: CurrencyAndAmount) {
         push(.savingsGoals(account: account, week: week, roundUp: roundUp))
     }
 }
 
 extension AppCoordinator: SavingsGoalsCoordinating {
-    func showCreateSavingsGoal(account: Account, onCreated: @escaping @MainActor () async -> Void) {
+    func showCreateSavingsGoal(for account: Account, onCreated: @escaping @MainActor () async -> Void) {
         onSavingsGoalCreated = onCreated
         sheet = .createSavingsGoal(account: account)
     }

@@ -24,7 +24,7 @@ struct AccountsService: AccountsServiceProtocol {
     func getAccounts() async throws -> [Account] {
         let url = try requestBuilder.url(path: "api/v2/accounts")
 
-        let accountsList = try await apiClient.get(AccountsList.self, url: url)
+        let accountsList = try await apiClient.get(AccountsListDTO.self, url: url)
 
         return accountsList.accounts
     }

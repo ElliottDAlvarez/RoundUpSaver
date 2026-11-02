@@ -20,11 +20,11 @@ private final class SpyCoordinator: AccountsListCoordinating, TransactionsFeedCo
         shownAccount = account
     }
 
-    func showSavingsGoals(account: Account, week: DateInterval, roundUp: CurrencyAndAmount) {
+    func showSavingsGoals(for account: Account, week: DateInterval, roundUp: CurrencyAndAmount) {
         shownSavingsGoals = (account, week, roundUp)
     }
 
-    func showCreateSavingsGoal(account: Account, onCreated: @escaping @MainActor () async -> Void) {
+    func showCreateSavingsGoal(for account: Account, onCreated: @escaping @MainActor () async -> Void) {
         createGoalAccount = account
         self.onCreated = onCreated
     }
@@ -108,7 +108,7 @@ struct AppCoordinatorTests {
         let roundUp = CurrencyAndAmount(currency: "GBP", amount: 115)
 
         coordinator.showTransactionsFeed(for: Fixture.account)
-        coordinator.showSavingsGoals(account: Fixture.account, week: Fixture.week, roundUp: roundUp)
+        coordinator.showSavingsGoals(for: Fixture.account, week: Fixture.week, roundUp: roundUp)
 
         #expect(coordinator.path == [
             .transactionsFeed(account: Fixture.account),
@@ -119,7 +119,7 @@ struct AppCoordinatorTests {
     @Test func popAndPopToRoot() {
         let coordinator = AppCoordinator(dependencies: makeDependencies())
         coordinator.showTransactionsFeed(for: Fixture.account)
-        coordinator.showSavingsGoals(account: Fixture.account,
+        coordinator.showSavingsGoals(for: Fixture.account,
                                      week: Fixture.week,
                                      roundUp: CurrencyAndAmount(currency: "GBP", amount: 0))
 
@@ -147,7 +147,7 @@ struct AppCoordinatorTests {
         let coordinator = AppCoordinator(dependencies: makeDependencies())
         var completionSawSheet: AppSheet?? = .none
 
-        coordinator.showCreateSavingsGoal(account: Fixture.account) {
+        coordinator.showCreateSavingsGoal(for: Fixture.account) {
             completionSawSheet = .some(coordinator.sheet)
         }
         #expect(coordinator.sheet == .createSavingsGoal(account: Fixture.account))
@@ -162,7 +162,7 @@ struct AppCoordinatorTests {
         let coordinator = AppCoordinator(dependencies: makeDependencies())
         var completionRan = false
 
-        coordinator.showCreateSavingsGoal(account: Fixture.account) { completionRan = true }
+        coordinator.showCreateSavingsGoal(for: Fixture.account) { completionRan = true }
         coordinator.didCancelCreateSavingsGoal()
         await coordinator.didCreateSavingsGoal()
 
@@ -175,7 +175,7 @@ struct AppCoordinatorTests {
         let coordinator = AppCoordinator(dependencies: makeDependencies(savings: savings))
         var completionRan = false
 
-        coordinator.showCreateSavingsGoal(account: Fixture.account) { completionRan = true }
+        coordinator.showCreateSavingsGoal(for: Fixture.account) { completionRan = true }
         let form = coordinator.createSavingsGoalViewModel(account: Fixture.account)
         form.name = "Holiday"
         await form.submit()
@@ -189,9 +189,9 @@ struct AppCoordinatorTests {
         let coordinator = AppCoordinator(dependencies: makeDependencies())
         var secondCompletionRan = false
 
-        coordinator.showCreateSavingsGoal(account: Fixture.account) {}
+        coordinator.showCreateSavingsGoal(for: Fixture.account) {}
         coordinator.didCancelCreateSavingsGoal()
-        coordinator.showCreateSavingsGoal(account: Fixture.account) { secondCompletionRan = true }
+        coordinator.showCreateSavingsGoal(for: Fixture.account) { secondCompletionRan = true }
 
         // SwiftUI's onDismiss for the first sheet arrives after the second was presented
         coordinator.sheetDidDismiss()

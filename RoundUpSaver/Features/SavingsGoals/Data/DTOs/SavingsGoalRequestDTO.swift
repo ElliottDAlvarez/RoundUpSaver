@@ -1,5 +1,5 @@
 //
-//  SavingsGoalRequest.swift
+//  SavingsGoalRequestDTO.swift
 //  RoundUpSaver
 //
 //  Created by Elliott D'Alvarez on 01/10/2026.

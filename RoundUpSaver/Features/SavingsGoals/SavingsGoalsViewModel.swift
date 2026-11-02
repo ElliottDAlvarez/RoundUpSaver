@@ -41,7 +41,7 @@ final class SavingsGoalsViewModel {
     }
 
     func showCreateSavingsGoal() {
-        coordinator?.showCreateSavingsGoal(account: account) { [weak self] in
+        coordinator?.showCreateSavingsGoal(for: account) { [weak self] in
             await self?.refresh()
         }
     }

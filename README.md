@@ -17,7 +17,7 @@ RoundUpSaver/
 │   └── DependencyInjection/   # Composition root (live and UI-test dependency graphs)
 ├── Core/                      # Networking, persistence, design system, shared presentation types
 ├── Domain/                    # Models and use cases (round-up calculation and transfer)
-└── Features/                  # Accounts, TransactionFeed, SavingGoals
+└── Features/                  # Accounts, TransactionsFeed, SavingsGoals
     └── <Feature>/
         ├── <Feature>View.swift          # Renders state and passes user actions to the view model
         ├── <Feature>ViewModel.swift     # Presentation logic; asks its coordinator to navigate

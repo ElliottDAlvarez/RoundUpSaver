@@ -14,6 +14,11 @@ import Foundation
 /// - **View models** hold presentation logic and ask their coordinator to navigate,
 ///   using a small feature-specific protocol (e.g. `AccountsListCoordinating`).
 /// - **Coordinators** create view models, inject dependencies, and change navigation state.
+///
+/// Naming follows the Swift API Design Guidelines: a type that *is* a coordinator is a noun
+/// (`AppCoordinator`), while a protocol describing a capability uses `-ing`
+/// (`AccountsListCoordinating`: "something that can coordinate the accounts list").
+/// One concrete coordinator can therefore implement several feature protocols.
 @MainActor
 protocol Coordinator: AnyObject {
     associatedtype Route: Hashable
